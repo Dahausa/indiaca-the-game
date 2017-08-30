@@ -1,0 +1,20 @@
+{
+  "name": "indiaca-the-game",
+  "version": "0.0.1",
+  "description": "a simple simply great game",
+  "main": "server/server.js",
+  "scripts": {
+    "rollup": "rollup -c \"rollup.config.js\"",
+    "build": "tsc && npm run rollup",
+    "start": "npm run build && node server/server.js | tsc -w"
+  },
+  "author": "Joern Hauser",
+  "license": "MIT",
+  "dependencies": {
+    "node-static": "^0.7.9",
+    "phaser": "^2.6.2",
+    "rollup": "^0.49.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "systemjs": "^0.20.18"
+  }
+}
