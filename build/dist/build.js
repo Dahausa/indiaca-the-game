@@ -10,7 +10,7 @@ var RegularIndiacaScore = (function () {
         this.playerId = playerId;
     }
     RegularIndiacaScore.prototype.getPlayerId = function () {
-        throw new Error("Method not implemented.");
+        return this.playerId;
     };
     RegularIndiacaScore.prototype.getPoints = function () {
         return this.points;
@@ -25,6 +25,7 @@ var RegularIndiacaScore = (function () {
         this.actualHits = this.actualHits + 1;
         if (this.actualHits == RegularIndiacaScore.MAX_HITS) {
             this.addPoint();
+            this.actualHits = 0;
         }
     };
     RegularIndiacaScore.prototype.addPoint = function () {
@@ -59,11 +60,13 @@ var GameState = (function (_super) {
     GameState.prototype.preload = function () {
         this.game.load.spritesheet('indiaca', '../assets/IndiacaBall.png', 32, 32);
         this.game.load.image('sky', '../assets/sky.png');
-        this.game.load.image('ground', '../assets/platform.png');
+        this.game.load.image('groundLeft', '../assets/groundLeft.png');
+        this.game.load.image('groundRight', '../assets/groundRight.png');
         this.game.load.spritesheet('dude', '../assets/dude.png', 32, 48);
         this.game.load.image('net', '../assets/Stick.png');
     };
     GameState.prototype.create = function () {
+        var CENTER_X = this.game.world.width / 2;
         this.game.add.sprite(0, 0, 'sky');
         //  We're going to be using physics, so enable the Arcade Physics system
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -72,13 +75,19 @@ var GameState = (function (_super) {
         //  We will enable physics for any object that is created in this group
         this.platforms.enableBody = true;
         // Here we create the ground.
-        var ground = this.platforms.create(0, this.game.world.height - 64, 'ground');
+        this.groundLeft = this.platforms.create(0, this.game.world.height - 64, 'groundLeft');
         //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-        ground.scale.setTo(2, 2);
+        this.groundLeft.scale.setTo(1, 2);
         //  This stops it from falling away when you jump on it
-        ground.body.immovable = true;
+        this.groundLeft.body.immovable = true;
+        // Here we create the ground.
+        this.groundRight = this.platforms.create(CENTER_X, this.game.world.height - 64, 'groundRight');
+        //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+        this.groundRight.scale.setTo(2, 2);
+        //  This stops it from falling away when you jump on it
+        this.groundRight.body.immovable = true;
         // The net 
-        this.net = this.game.add.sprite(this.game.world.width / 2 - 8, this.game.world.height - 180, 'net');
+        this.net = this.game.add.sprite(CENTER_X - 8, this.game.world.height - 180, 'net');
         this.game.physics.arcade.enable(this.net);
         this.net.scale.setTo(1, 1.2);
         this.net.body.immovable = true;
@@ -118,13 +127,15 @@ var GameState = (function (_super) {
         this.rightButton = this.game.input.keyboard.addKey(Phaser.Keyboard.D);
     };
     GameState.prototype.update = function () {
-        //  Collide the player and the stars with the platforms
+        //  Collision handling
         var playerLeftHitPlatform = this.game.physics.arcade.collide(this.playerLeft, this.platforms);
         var playerRightHitPlatform = this.game.physics.arcade.collide(this.playerRight, this.platforms);
         var indiacaHitPlatform = this.game.physics.arcade.collide(this.indiaca, this.platforms);
         var indiacaHitNet = this.game.physics.arcade.collide(this.indiaca, this.net);
         var indiacaHitPlayerLeft = this.game.physics.arcade.collide(this.indiaca, this.playerLeft);
         var indiacaHitPlayerRight = this.game.physics.arcade.collide(this.indiaca, this.playerRight);
+        var indiacaHitGroundPlayerLeft = this.game.physics.arcade.collide(this.indiaca, this.groundLeft);
+        var indiacaHitGroundPlayerRight = this.game.physics.arcade.collide(this.indiaca, this.groundRight);
         var facing = this.indiaca.body.facing;
         //console.log("facing: " + facing + ": velocity: " + indiaca.body.velocity.y);
         if (this.indiacaDirection != facing) {
@@ -183,9 +194,17 @@ var GameState = (function (_super) {
         }
         if (indiacaHitPlayerLeft) {
             this.indiaca.body.velocity.y = -350;
+            this.playerRightScore.indiacaTouchedByOpponent();
         }
         if (indiacaHitPlayerRight) {
             this.indiaca.body.velocity.y = -350;
+            this.playerLeftScore.indiacaTouchedByOpponent();
+        }
+        if (indiacaHitGroundPlayerLeft) {
+            this.playerRightScore.indiacaHitGroundOfOpponent();
+        }
+        if (indiacaHitGroundPlayerRight) {
+            this.playerLeftScore.indiacaHitGroundOfOpponent();
         }
     };
     GameState.prototype.render = function () {

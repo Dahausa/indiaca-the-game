@@ -7,7 +7,7 @@ var RegularIndiacaScore = (function () {
         this.playerId = playerId;
     }
     RegularIndiacaScore.prototype.getPlayerId = function () {
-        throw new Error("Method not implemented.");
+        return this.playerId;
     };
     RegularIndiacaScore.prototype.getPoints = function () {
         return this.points;
@@ -22,6 +22,7 @@ var RegularIndiacaScore = (function () {
         this.actualHits = this.actualHits + 1;
         if (this.actualHits == RegularIndiacaScore.MAX_HITS) {
             this.addPoint();
+            this.actualHits = 0;
         }
     };
     RegularIndiacaScore.prototype.addPoint = function () {

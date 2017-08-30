@@ -4,8 +4,6 @@ import { ScoreEventListener, ScoreEvent } from './api';
 
 export class RegularIndiacaScore implements PlayerScore {
     
-
-
     private static MAX_HITS: number = 3;
     private actualHits: number = 0;
 
@@ -19,7 +17,7 @@ export class RegularIndiacaScore implements PlayerScore {
     }
 
     getPlayerId(): string {
-        throw new Error("Method not implemented.");
+        return this.playerId;
     }
 
     getPoints(): number {
@@ -38,6 +36,7 @@ export class RegularIndiacaScore implements PlayerScore {
         this.actualHits = this.actualHits + 1;
         if (this.actualHits == RegularIndiacaScore.MAX_HITS) {
             this.addPoint();
+            this.actualHits = 0;
         }
     }
 
