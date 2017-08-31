@@ -5,9 +5,21 @@ import { ScoreEventListener } from './api/api';
 
 
 export class GameState extends Phaser.State implements ScoreEventListener {
+    playerRightScoreDisplay: Phaser.Text;
+    playerLeftScoreDisplay: Phaser.Text;
 
     playerHasnewScore(score: PlayerScore): void {
-        console.log('Player ' + score.getPlayerId() + ' scored! Has now ' + score.getPoints() + ' points');
+        
+
+        let playerId = score.getPlayerId();
+
+        if(playerId == 'playerLeft') {
+            this.playerLeftScoreDisplay.setText(score.getPoints().toString());
+        } else {
+            this.playerRightScoreDisplay.setText(score.getPoints().toString());
+        }
+
+        // implement pause as http://phaser.io/examples/v2/misc/pause-menu
     }
 
     cursorPlayerRight: Phaser.CursorKeys;
@@ -35,11 +47,14 @@ export class GameState extends Phaser.State implements ScoreEventListener {
         this.game.load.image('sky', '../assets/sky.png');
         this.game.load.image('groundLeft', '../assets/groundLeft.png');
         this.game.load.image('groundRight', '../assets/groundRight.png');
+        this.game.load.spritesheet('playerLeft','../assets/PlayerLeft.png',128,128);
         this.game.load.spritesheet('dude', '../assets/dude.png', 32, 48);
         this.game.load.image('net', '../assets/Stick.png');
     }
 
     create() {
+
+
 
         let CENTER_X = this.game.world.width / 2;
 
@@ -61,7 +76,7 @@ export class GameState extends Phaser.State implements ScoreEventListener {
         // Here we create the ground.
         this.groundRight = this.platforms.create(CENTER_X, this.game.world.height - 64, 'groundRight');
         //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-        this.groundRight.scale.setTo(2, 2);
+        this.groundRight.scale.setTo(1, 2);
         //  This stops it from falling away when you jump on it
         this.groundRight.body.immovable = true;
 
@@ -89,15 +104,18 @@ export class GameState extends Phaser.State implements ScoreEventListener {
 
         // The left player
         this.playerLeftScore = new RegularIndiacaScore(this, 'playerLeft');
-        this.playerLeft = this.players.create(32, this.game.world.height - 150, 'dude');
+        this.playerLeftScoreDisplay = this.game.add.text(10, 10, "Player Left: " + this.playerLeftScore.getPoints(),{ fontSize: 12, fill: '#000' });
+        this.playerLeft = this.players.create(32, this.game.world.height - 150, 'playerLeft');
         this.playerLeft.body.bounce.y = 0;
         this.playerLeft.body.gravity.y = 300;
         this.playerLeft.body.collideWorldBounds = true;
-        this.playerLeft.animations.add('left', [0, 1, 2, 3], 10, true);
-        this.playerLeft.animations.add('right', [5, 6, 7, 8], 10, true);
+        this.playerLeft.animations.add('left', [0, 1, 2], 10, true);
+        this.playerLeft.animations.add('right', [0, 2, 1], 10, true);
+        this.playerLeft.scale.setTo(0.5,0.5);
 
         // The right player
         this.playerRightScore = new RegularIndiacaScore(this, 'playerRight');
+        this.playerRightScoreDisplay = this.game.add.text(this.game.width - 100, 10, "Player Right: " + this.playerLeftScore.getPoints(),{ fontSize: 12, fill: '#000' });
         this.playerRight = this.players.create(this.game.world.width - 10, this.game.world.height - 150, 'dude');
         this.playerRight.body.bounce.y = 0;
         this.playerRight.body.gravity.y = 300;
@@ -116,11 +134,7 @@ export class GameState extends Phaser.State implements ScoreEventListener {
 
     update() {
 
-        //  Collision handling
-        var playerLeftHitPlatform = this.game.physics.arcade.collide(this.playerLeft, this.platforms);
-        var playerRightHitPlatform = this.game.physics.arcade.collide(this.playerRight, this.platforms);
-
-        var indiacaHitPlatform = this.game.physics.arcade.collide(this.indiaca, this.platforms);
+        //  Collision handling (order is important!)
         var indiacaHitNet = this.game.physics.arcade.collide(this.indiaca, this.net);
 
         var indiacaHitPlayerLeft = this.game.physics.arcade.collide(this.indiaca, this.playerLeft);
@@ -128,6 +142,9 @@ export class GameState extends Phaser.State implements ScoreEventListener {
 
         var indiacaHitGroundPlayerLeft = this.game.physics.arcade.collide(this.indiaca, this.groundLeft);
         var indiacaHitGroundPlayerRight = this.game.physics.arcade.collide(this.indiaca, this.groundRight);
+
+        var playerLeftHitPlatform = this.game.physics.arcade.collide(this.playerLeft, this.platforms);
+        var playerRightHitPlatform = this.game.physics.arcade.collide(this.playerRight, this.platforms);
         
 
         let facing = this.indiaca.body.facing;
@@ -194,7 +211,7 @@ export class GameState extends Phaser.State implements ScoreEventListener {
             this.playerLeft.body.velocity.y = -300;
         }
 
-        if (indiacaHitPlatform) {
+        if (indiacaHitGroundPlayerLeft || indiacaHitGroundPlayerRight) {
             this.indiaca.body.velocity.y = 0;
             this.indiaca.body.velocity.x = 0;
         }
@@ -210,9 +227,11 @@ export class GameState extends Phaser.State implements ScoreEventListener {
         }
 
         if(indiacaHitGroundPlayerLeft) {
+            console.log('GRound left');
             this.playerRightScore.indiacaHitGroundOfOpponent();
         }
         if(indiacaHitGroundPlayerRight) {
+            console.log('GRound right');
             this.playerLeftScore.indiacaHitGroundOfOpponent();
         }
 
@@ -222,7 +241,7 @@ export class GameState extends Phaser.State implements ScoreEventListener {
     render() {
 
         //debug helper
-        this.game.debug.spriteInfo(this.indiaca, 32, 48);
+       // this.game.debug.spriteInfo(this.indiaca, 32, 48);
 
     }
 
